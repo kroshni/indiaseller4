@@ -1,26 +1,24 @@
 import { Client, types } from 'cassandra-driver';
 
-if (!process.env.CASSANDRA_CONTACT_POINTS || !process.env.CASSANDRA_LOCAL_DC || !process.env.CASSANDRA_KEYSPACE) {
-  throw new Error('Missing required Cassandra environment variables');
-}
-
+// Create a singleton client instance
 const client = new Client({
-  contactPoints: process.env.CASSANDRA_CONTACT_POINTS.split(','),
-  localDataCenter: process.env.CASSANDRA_LOCAL_DC,
-  keyspace: process.env.CASSANDRA_KEYSPACE,
+  contactPoints: ['127.0.0.1'],
+  localDataCenter: 'datacenter1',
+  keyspace: 'indiaseller4',
 });
 
-export const connectToDatabase = async () => {
-  try {
-    await client.connect();
-    console.log('Connected to Cassandra database');
-  } catch (error) {
-    console.error('Error connecting to Cassandra:', error);
-    throw error;
+// Function to get a connected client
+export async function getConnectedClient() {
+  if (!client.connected) {
+    try {
+      await client.connect();
+      console.log('Connected to Cassandra database');
+    } catch (error) {
+      console.error('Error connecting to Cassandra:', error);
+      throw error;
+    }
   }
-};
-
-// Initialize connection
-connectToDatabase().catch(console.error);
+  return client;
+}
 
 export { client, types }; 

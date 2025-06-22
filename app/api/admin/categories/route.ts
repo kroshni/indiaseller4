@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { client, types } from '@/cassandra/cassandraClient';
+import cassandraClient from '@/cassandra/cassandraClient';
 
 // Helper function to generate slug
 function generateSlug(name: string): string {
@@ -27,45 +27,24 @@ function validateCategory(data: any) {
 // GET - List categories with pagination and search
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
-    const sortBy = searchParams.get('sortBy') || 'name';
-    const sortOrder = searchParams.get('sortOrder') || 'asc';
-
-    let query = 'SELECT * FROM categories';
-    const params: any[] = [];
-
-    if (search) {
-      query += ' WHERE name LIKE ?';
-      params.push(`%${search}%`);
-    }
-
-    // Note: In production, you'd want to implement proper pagination with Cassandra
-    // This is a simplified version
-    const result = await client.execute(query, params, { prepare: true });
-    const total = result.rows.length;
-    const categories = result.rows
-      .slice((page - 1) * limit, page * limit)
-      .map(row => ({
-        ...row,
-        category_id: row.category_id.toString()
-      }));
-
-    return NextResponse.json({
-      categories,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    const client = await cassandraClient.getConnectedClient();
+    const result = await client.execute(
+      'SELECT category_id, name, slug, description, status FROM categories',
+      [],
+      { prepare: true }
+    );
+    const categories = result.rows.map(row => ({
+      id: row.category_id.toString(),
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      status: row.status
+    }));
+    return NextResponse.json(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch categories' },
+      { error: 'Failed to fetch categories', details: error.message },
       { status: 500 }
     );
   }
@@ -82,6 +61,7 @@ export async function POST(request: Request) {
     }
 
     const slug = data.slug?.trim() || generateSlug(data.name);
+    const client = await cassandraClient.getConnectedClient();
 
     // Check if slug already exists
     const existingResult = await client.execute(
@@ -98,7 +78,7 @@ export async function POST(request: Request) {
     }
 
     const category = {
-      category_id: types.Uuid.random(),
+      category_id: cassandraClient.types.Uuid.random(),
       name: data.name.trim(),
       slug,
       description: data.description?.trim() || null,
@@ -143,6 +123,7 @@ export async function PUT(request: Request) {
     }
 
     const slug = data.slug?.trim() || generateSlug(data.name);
+    const client = await cassandraClient.getConnectedClient();
 
     // Check if slug already exists for other categories
     const existingResult = await client.execute(
@@ -175,7 +156,7 @@ export async function PUT(request: Request) {
       data.description?.trim() || null,
       (data.status || 'active').toLowerCase(),
       new Date(),
-      types.Uuid.fromString(data.category_id)
+      cassandraClient.types.Uuid.fromString(data.category_id)
     ];
 
     await client.execute(query, params, { prepare: true });
@@ -206,9 +187,10 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const client = await cassandraClient.getConnectedClient();
     await client.execute(
       'DELETE FROM categories WHERE category_id = ?',
-      [types.Uuid.fromString(categoryId)],
+      [cassandraClient.types.Uuid.fromString(categoryId)],
       { prepare: true }
     );
 

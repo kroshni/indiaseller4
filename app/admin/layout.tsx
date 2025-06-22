@@ -9,7 +9,8 @@ import {
   ShoppingBagIcon,
   Bars3Icon,
   XMarkIcon,
-  WrenchScrewdriverIcon
+  WrenchScrewdriverIcon,
+  UserPlusIcon
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'Services', href: '/admin/services', icon: WrenchScrewdriverIcon },
   { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
+  { name: 'Add Seller', href: '/admin/sellers/add', icon: UserPlusIcon },
 ];
 
 export default function AdminLayout({

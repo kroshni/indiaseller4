@@ -12,7 +12,7 @@ async function createCategoryTable() {
     console.log('Connected to Cassandra');
 
     // Create categories table
-    const createTable = `
+    await client.execute(`
       CREATE TABLE IF NOT EXISTS categories (
         category_id uuid PRIMARY KEY,
         name text,
@@ -21,29 +21,60 @@ async function createCategoryTable() {
         status text,
         created_at timestamp,
         updated_at timestamp
-      )`;
-    
-    await client.execute(createTable);
-    console.log('Table categories created successfully');
+      )
+    `);
+    console.log('Categories table created');
 
-    // Create index on slug for uniqueness checks
-    const createSlugIndex = `
-      CREATE INDEX IF NOT EXISTS categories_slug_idx ON categories (slug)`;
-    
-    await client.execute(createSlugIndex);
-    console.log('Index on slug created successfully');
+    // Create index on slug
+    await client.execute(`
+      CREATE INDEX IF NOT EXISTS categories_slug_idx ON categories (slug)
+    `);
+    console.log('Categories slug index created');
 
-    // Create index on name for searching
-    const createNameIndex = `
-      CREATE INDEX IF NOT EXISTS categories_name_idx ON categories (name)`;
-    
-    await client.execute(createNameIndex);
-    console.log('Index on name created successfully');
+    // Insert some sample categories
+    const sampleCategories = [
+      {
+        category_id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Electronics',
+        slug: 'electronics',
+        description: 'Electronic gadgets and devices',
+        status: 'active',
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        category_id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Fashion',
+        slug: 'fashion',
+        description: 'Clothing and accessories',
+        status: 'active',
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    ];
+
+    for (const category of sampleCategories) {
+      await client.execute(`
+        INSERT INTO categories 
+        (category_id, name, slug, description, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [
+        category.category_id,
+        category.name,
+        category.slug,
+        category.description,
+        category.status,
+        category.created_at,
+        category.updated_at
+      ], { prepare: true });
+    }
+    console.log('Sample categories inserted');
 
   } catch (error) {
-    console.error('Error creating category table:', error);
+    console.error('Error:', error);
   } finally {
     await client.shutdown();
+    console.log('Connection closed');
   }
 }
 

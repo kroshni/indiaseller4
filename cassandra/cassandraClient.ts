@@ -8,7 +8,7 @@ const client = new Client({
 });
 
 // Function to get a connected client
-export async function getConnectedClient() {
+async function getConnectedClient() {
   if (!client.connected) {
     try {
       await client.connect();
@@ -21,4 +21,12 @@ export async function getConnectedClient() {
   return client;
 }
 
-export { client, types }; 
+// Export everything as a module
+const cassandraClient = {
+  client,
+  types,
+  getConnectedClient
+};
+
+export default cassandraClient;
+export { client, types, getConnectedClient };

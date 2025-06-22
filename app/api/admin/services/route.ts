@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getConnectedClient } from '@/cassandra/cassandraClient';
+import cassandraClient from '@/cassandra/cassandraClient';
 import { verifyToken } from '@/lib/jwt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get connected client
-    client = await getConnectedClient();
+    client = await cassandraClient.getConnectedClient();
 
     // Get query parameters
     const url = new URL(request.url);
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get connected client
-    client = await getConnectedClient();
+    client = await cassandraClient.getConnectedClient();
 
     const body = await request.json();
     const { service_name, status } = body;
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get connected client
-    client = await getConnectedClient();
+    client = await cassandraClient.getConnectedClient();
 
     const body = await request.json();
     const { service_id, service_name, status } = body;
@@ -200,7 +200,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get connected client
-    client = await getConnectedClient();
+    client = await cassandraClient.getConnectedClient();
 
     const url = new URL(request.url);
     const service_id = url.searchParams.get('service_id');

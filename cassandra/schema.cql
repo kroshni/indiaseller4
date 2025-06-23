@@ -179,4 +179,41 @@ CREATE INDEX IF NOT EXISTS idx_seller_company ON seller_business_details (compan
 CREATE INDEX IF NOT EXISTS idx_seller_gstin ON seller_business_details (gstin);
 CREATE INDEX IF NOT EXISTS idx_seller_pan ON seller_business_details (pan);
 CREATE INDEX IF NOT EXISTS idx_seller_status ON sellers (status);
-CREATE INDEX IF NOT EXISTS idx_seller_kyc_status ON sellers (kyc_status); 
+CREATE INDEX IF NOT EXISTS idx_seller_kyc_status ON sellers (kyc_status);
+
+-- Create customers table
+CREATE TABLE IF NOT EXISTS customers (
+    customer_id uuid PRIMARY KEY,
+    name text,
+    email text,
+    phone text,
+    profile_picture_url text,
+    password_hash text,
+    status boolean,
+    created_at timestamp,
+    updated_at timestamp
+);
+
+-- Create index on customer email for uniqueness checks
+CREATE INDEX IF NOT EXISTS customers_email_idx ON customers (email);
+
+-- Create customer addresses table
+CREATE TABLE IF NOT EXISTS customer_addresses (
+    customer_id uuid,
+    address_id uuid,
+    address_type text,
+    line1 text,
+    line2 text,
+    city text,
+    state text,
+    postal_code text,
+    country text,
+    location_image_url text,
+    is_default boolean,
+    created_at timestamp,
+    updated_at timestamp,
+    PRIMARY KEY ((customer_id), address_id)
+);
+
+-- Create index on is_default to find default addresses
+CREATE INDEX IF NOT EXISTS customer_addresses_default_idx ON customer_addresses (is_default); 

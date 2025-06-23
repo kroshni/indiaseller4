@@ -13,17 +13,20 @@ import {
   UserPlusIcon,
   UserGroupIcon,
   TagIcon,
-  ArrowLeftOnRectangleIcon
+  ArrowLeftOnRectangleIcon,
+  UserIcon,
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
-  { name: 'Seller List', href: '/admin/sellers', icon: UserGroupIcon },
-  { name: 'Categories', href: '/admin/categories', icon: TagIcon },
-  { name: 'Services', href: '/admin/services', icon: WrenchScrewdriverIcon },
+  { name: 'Sellers', href: '/admin/sellers', icon: UsersIcon },
+  { name: 'Customers', href: '/admin/customers', icon: UserIcon },
+  { name: 'Categories', href: '/admin/categories', icon: FolderIcon },
+  { name: 'Services', href: '/admin/services', icon: GlobeAltIcon },
   { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
-  { name: 'Users', href: '/admin/users', icon: UsersIcon },
+  { name: 'Users', href: '/admin/users', icon: UserGroupIcon },
   { name: 'Add Seller', href: '/admin/sellers/add', icon: UserPlusIcon },
 ];
 

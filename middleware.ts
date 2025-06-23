@@ -2,57 +2,84 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/edge-jwt';
 
-export async function middleware(request: NextRequest) {
-  console.log('Middleware processing path:', request.nextUrl.pathname);
+// Paths that require admin authentication
+const ADMIN_PATHS = ['/admin'];
+// Paths that require seller authentication
+const SELLER_PATHS = ['/seller'];
+// Paths that are public
+const PUBLIC_PATHS = ['/admin/login', '/seller/login'];
 
-  // Skip middleware for login-related paths and API routes
-  if (request.nextUrl.pathname === '/admin/login' || 
-      request.nextUrl.pathname.startsWith('/api/')) {
-    console.log('Skipping middleware for:', request.nextUrl.pathname);
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Skip middleware for public paths and non-protected routes
+  if (
+    PUBLIC_PATHS.some((path) => pathname.startsWith(path)) ||
+    (!ADMIN_PATHS.some((path) => pathname.startsWith(path)) &&
+      !SELLER_PATHS.some((path) => pathname.startsWith(path)))
+  ) {
     return NextResponse.next();
   }
 
-  // Only protect /admin/* routes
-  if (request.nextUrl.pathname.startsWith('/admin/')) {
+  // Check for admin routes
+  if (pathname.startsWith('/admin')) {
+    const adminToken = request.cookies.get('admin_token');
+
+    if (!adminToken) {
+      return redirectToLogin(request, 'admin');
+    }
+
     try {
-      // Get token from cookie
-      const token = request.cookies.get('auth_token')?.value;
-      console.log('Found token in cookies:', !!token);
-
-      if (!token) {
-        console.log('No token found, redirecting to login');
-        return NextResponse.redirect(new URL('/admin/login', request.url));
+      const decoded = await verifyToken(adminToken.value);
+      if (!decoded || decoded.role !== 'admin') {
+        return redirectToLogin(request, 'admin');
       }
-
-      // Verify token
-      const payload = await verifyToken(token);
-      console.log('Token verified, payload:', payload);
-
-      if (payload.role !== 'admin') {
-        console.log('Invalid role, redirecting to login');
-        return NextResponse.redirect(new URL('/admin/login', request.url));
-      }
-
-      console.log('Access granted to:', request.nextUrl.pathname);
-      return NextResponse.next();
     } catch (error) {
-      console.error('Middleware error:', error);
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return redirectToLogin(request, 'admin');
+    }
+  }
+
+  // Check for seller routes
+  if (pathname.startsWith('/seller')) {
+    const sellerToken = request.cookies.get('seller_token');
+
+    if (!sellerToken) {
+      return redirectToLogin(request, 'seller');
+    }
+
+    try {
+      const decoded = await verifyToken(sellerToken.value);
+      if (!decoded || decoded.role !== 'seller') {
+        return redirectToLogin(request, 'seller');
+      }
+    } catch (error) {
+      return redirectToLogin(request, 'seller');
     }
   }
 
   return NextResponse.next();
 }
 
+function redirectToLogin(request: NextRequest, type: 'admin' | 'seller') {
+  const url = new URL(`/${type}/login`, request.url);
+  url.searchParams.set('from', request.nextUrl.pathname);
+  return NextResponse.redirect(url);
+}
+
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * Match all request paths except:
+     * 1. Matches any path starting with:
+     *  - api (API routes)
+     *  - _next/static (static files)
+     *  - _next/image (image optimization files)
+     *  - favicon.ico (favicon file)
+     *  - public folder
+     * 2. But includes:
+     *  - /api/admin
+     *  - /api/seller
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/(?!admin|seller)|_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

@@ -66,6 +66,9 @@ CREATE TABLE IF NOT EXISTS sellers (
     phone text,
     profile_picture_url text,
     password_hash text,
+    status boolean DEFAULT false,
+    kyc_status boolean DEFAULT false,
+    top_scorer decimal,
     created_at timestamp,
     updated_at timestamp,
     PRIMARY KEY (seller_id)
@@ -174,4 +177,6 @@ CREATE INDEX IF NOT EXISTS idx_seller_email ON sellers (email);
 CREATE INDEX IF NOT EXISTS idx_seller_phone ON sellers (phone);
 CREATE INDEX IF NOT EXISTS idx_seller_company ON seller_business_details (company_name);
 CREATE INDEX IF NOT EXISTS idx_seller_gstin ON seller_business_details (gstin);
-CREATE INDEX IF NOT EXISTS idx_seller_pan ON seller_business_details (pan); 
+CREATE INDEX IF NOT EXISTS idx_seller_pan ON seller_business_details (pan);
+CREATE INDEX IF NOT EXISTS idx_seller_status ON sellers (status);
+CREATE INDEX IF NOT EXISTS idx_seller_kyc_status ON sellers (kyc_status); 

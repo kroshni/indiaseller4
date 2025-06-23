@@ -10,12 +10,17 @@ import {
   Bars3Icon,
   XMarkIcon,
   WrenchScrewdriverIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  UserGroupIcon,
+  TagIcon,
+  ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
-  { name: 'Categories', href: '/admin/categories', icon: FolderIcon },
+  { name: 'Seller List', href: '/admin/sellers', icon: UserGroupIcon },
+  { name: 'Categories', href: '/admin/categories', icon: TagIcon },
   { name: 'Services', href: '/admin/services', icon: WrenchScrewdriverIcon },
   { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
@@ -90,7 +95,7 @@ export default function AdminLayout({
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <a
+                  <Link
                     key={item.name}
                     href={item.href}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
@@ -105,7 +110,7 @@ export default function AdminLayout({
                       }`}
                     />
                     {item.name}
-                  </a>
+                  </Link>
                 );
               })}
             </nav>
@@ -138,7 +143,7 @@ export default function AdminLayout({
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <a
+                  <Link
                     key={item.name}
                     href={item.href}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
@@ -153,7 +158,7 @@ export default function AdminLayout({
                       }`}
                     />
                     {item.name}
-                  </a>
+                  </Link>
                 );
               })}
             </nav>

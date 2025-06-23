@@ -27,20 +27,55 @@ function validateCategory(data: any) {
 // GET - List categories with pagination and search
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    
     const client = await cassandraClient.getConnectedClient();
-    const result = await client.execute(
-      'SELECT category_id, name, slug, description, status FROM categories',
+    
+    // First get total count for pagination
+    const countResult = await client.execute(
+      'SELECT COUNT(*) as total FROM categories',
       [],
       { prepare: true }
     );
-    const categories = result.rows.map(row => ({
-      id: row.category_id.toString(),
+    const total = countResult.rows[0].total.low || 0; // Handle BigInt
+    
+    // Then get paginated results
+    let query = 'SELECT category_id, name, slug, description, status FROM categories';
+    let params = [];
+    
+    // Add search condition if search term is provided
+    if (search) {
+      query += ' WHERE name CONTAINS ? ALLOW FILTERING';
+      params.push(search);
+    }
+    
+    const result = await client.execute(query, params, { prepare: true });
+    
+    // Manual pagination since Cassandra doesn't support OFFSET
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedRows = result.rows.slice(startIndex, endIndex);
+    
+    const categories = paginatedRows.map(row => ({
+      category_id: row.category_id.toString(),
       name: row.name,
       slug: row.slug,
       description: row.description,
       status: row.status
     }));
-    return NextResponse.json(categories);
+
+    return NextResponse.json({
+      categories,
+      pagination: {
+        page,
+        limit,
+        total: result.rows.length,
+        totalPages: Math.ceil(result.rows.length / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(

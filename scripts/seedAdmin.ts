@@ -1,18 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
-import { getClient, connectClient } from '../cassandra/cassandraClient';
+import cassandraClient from '../cassandra/cassandraClient';
 
 async function seedAdmin() {
   try {
-    // Connect to Cassandra
-    await connectClient();
-    const client = getClient();
+    // Get connected client
+    const client = await cassandraClient.getConnectedClient();
 
     // Admin user details
     const adminUser = {
       user_id: uuidv4(),
-      email: 'admin@example.com',
-      password: await bcrypt.hash('admin123', 10),
+      email: 'admin@indiaseller.com',
+      password_hash: await bcrypt.hash('admin123', 10),
       role: 'admin',
       created_at: new Date(),
       updated_at: new Date()
@@ -30,14 +29,14 @@ async function seedAdmin() {
     // Insert admin user
     const insertQuery = `
       INSERT INTO admin_users (
-        user_id, email, password, role, created_at, updated_at
+        user_id, email, password_hash, role, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
       adminUser.user_id,
       adminUser.email,
-      adminUser.password,
+      adminUser.password_hash,
       adminUser.role,
       adminUser.created_at,
       adminUser.updated_at

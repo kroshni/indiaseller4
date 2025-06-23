@@ -8,9 +8,9 @@ export async function POST(request: Request) {
     const { email, password } = await request.json();
     const client = await cassandraClient.getConnectedClient();
 
-    // Find seller by email
+    // Find seller by email with all necessary fields
     const result = await client.execute(
-      'SELECT seller_id, name, password_hash, status FROM sellers WHERE email = ? ALLOW FILTERING',
+      'SELECT * FROM sellers WHERE email = ? ALLOW FILTERING',
       [email],
       { prepare: true }
     );
@@ -45,16 +45,29 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate JWT token
+    // Generate JWT token with seller's email
     const token = await signToken({
       userId: seller.seller_id.toString(),
-      email: email,
+      email: seller.email,
       role: 'seller',
     });
 
+    // Create response with seller data (excluding sensitive information)
+    const sanitizedSeller = {
+      seller_id: seller.seller_id.toString(),
+      name: seller.name,
+      email: seller.email,
+      business_name: seller.business_name,
+      business_type: seller.business_type,
+      status: seller.status
+    };
+
     // Set cookie with JWT token
     const response = NextResponse.json(
-      { message: 'Login successful' },
+      { 
+        message: 'Login successful',
+        seller: sanitizedSeller
+      },
       { status: 200 }
     );
 

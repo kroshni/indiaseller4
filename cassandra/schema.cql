@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS categories_slug_idx ON categories (slug);
 CREATE TABLE IF NOT EXISTS admin_users (
   user_id uuid PRIMARY KEY,
   email text,
-  password text,
+  password_hash text,
   role text,
   created_at timestamp,
   updated_at timestamp

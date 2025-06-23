@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,9 +31,10 @@ export default function LoginPage() {
       }
 
       if (data.success) {
-        console.log('Login successful, redirecting to dashboard...');
-        router.push('/admin/dashboard');
-        // Force a hard reload to ensure middleware picks up the new cookie
+        console.log('Login successful, redirecting...');
+        // Get the redirect URL from the query params or default to dashboard
+        const redirectTo = searchParams.get('from') || '/admin/dashboard';
+        router.push(redirectTo);
         router.refresh();
       }
     } catch (err) {

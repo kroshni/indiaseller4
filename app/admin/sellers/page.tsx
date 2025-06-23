@@ -18,7 +18,18 @@ import {
   ArrowUpIcon,
   ArrowDownIcon
 } from '@heroicons/react/24/outline';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle2, XCircle, Eye, Pencil, Trash } from 'lucide-react';
 
 interface Seller {
   seller_id: string;
@@ -133,17 +144,17 @@ export default function SellersPage() {
 
   const handleDelete = async (sellerId: string) => {
     try {
-      const response = await fetch(`/api/admin/sellers/list`, {
+      const response = await fetch(`/api/admin/sellers/list/${sellerId}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seller_id: sellerId })
       });
+
       if (!response.ok) throw new Error('Failed to delete seller');
+
+      // Refresh the list
       fetchSellers();
-      setSellerToDelete(null);
-      setDeleteDialogOpen(false);
     } catch (err) {
       console.error('Error deleting seller:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete seller');
     }
   };
 
@@ -282,16 +293,26 @@ export default function SellersPage() {
                 </TableCell>
                 <TableCell>{seller.company_name}</TableCell>
                 <TableCell>
-                  <Switch
-                    checked={seller.status}
-                    onCheckedChange={(checked) => handleStatusChange(seller.seller_id, checked)}
-                  />
+                  {seller.status ? (
+                    <span className="flex items-center text-green-600">
+                      <CheckCircle2 className="h-5 w-5 mr-1" /> Active
+                    </span>
+                  ) : (
+                    <span className="flex items-center text-red-600">
+                      <XCircle className="h-5 w-5 mr-1" /> Inactive
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <Switch
-                    checked={seller.kyc_status}
-                    onCheckedChange={(checked) => handleKYCChange(seller.seller_id, checked)}
-                  />
+                  {seller.kyc_status ? (
+                    <span className="flex items-center text-green-600">
+                      <CheckCircle2 className="h-5 w-5 mr-1" /> Verified
+                    </span>
+                  ) : (
+                    <span className="flex items-center text-red-600">
+                      <XCircle className="h-5 w-5 mr-1" /> Not Verified
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {new Date(seller.created_at).toLocaleDateString()}
@@ -303,25 +324,49 @@ export default function SellersPage() {
                       size="icon"
                       onClick={() => router.push(`/admin/sellers/${seller.seller_id}`)}
                     >
-                      <EyeIcon className="h-4 w-4" />
+                      <Eye className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => router.push(`/admin/sellers/${seller.seller_id}/edit`)}
                     >
-                      <PencilIcon className="h-4 w-4" />
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setSellerToDelete(seller.seller_id);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600 hover:text-red-800"
+                          onClick={() => {
+                            setSellerToDelete(seller.seller_id);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Seller</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this seller? This action cannot be undone.
+                            All related data including categories, certifications, addresses, documents,
+                            and gallery images will be permanently deleted.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-800"
+                            onClick={() => handleDelete(seller.seller_id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>
